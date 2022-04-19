@@ -1,0 +1,55 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class Baseline(torch.nn.Module):
+    def __init__(self, input_size, num_labels=3):
+        super(Baseline, self).__init__()
+        self.conv1 = nn.Conv1d(input_size, out_channels=50, kernel_size=3, padding='same')
+        self.dropout1 = nn.Dropout()
+        self.conv2 = nn.Conv1d(50, out_channels=50, dilation=2, kernel_size=4, padding='same')
+        self.dropout2 = nn.Dropout()
+        self.maxpool = nn.MaxPool1d(kernel_size=4)
+        self.conv3 = nn.Conv1d(50, out_channels=50, dilation=2, kernel_size=2, padding='same')
+        self.dropout3 = nn.Dropout()
+        self.dropout4 = nn.Dropout()
+        self.dense1 = nn.Linear(50, 100)
+        self.dropout5 = nn.Dropout()
+        self.dense2 = nn.Linear(100, num_labels)
+
+    def forward(self, x):
+        # print(x.shape)
+        # print(x.shape)
+        # print('x', x.shape)
+        # x = x.unsqueeze(dim=0)
+        x = torch.transpose(x, 1, 2)
+        # print(x.shape)
+        x = self.conv1(x)
+        x = self.dropout1(x)
+        x = self.conv2(x)
+        x = self.dropout2(x)
+        x = self.maxpool(x)
+        x = self.conv3(x)
+        x = self.dropout3(x)
+        x, _ = torch.max(x, 2)
+        x = self.dropout4(x)
+        x = self.dense1(x)
+        x = F.relu(x)
+        x = self.dropout5(x)
+        x = self.dense2(x)
+        # x = F.softmax(x, dim=1)
+        return x
+
+    # input = Input(shape=(train_data.shape[1],train_data.shape[2]))
+    # conv = Conv1D(filters=args['filters_audio'], dilation_rate=1, kernel_size=3, padding='same', data_format='channels_last', dtype='float32')(input)
+    # drop = Dropout(args['drop_audio'])(conv)
+    # conv2 = Conv1D(filters=args['filters_audio'], dilation_rate=2, kernel_size=4, padding='same', data_format='channels_last', dtype='float32')(drop)
+    # drop2 = Dropout(args['drop_audio'])(conv2)
+    # mp = MaxPool1D(pool_size=4, data_format='channels_last')(drop2)
+    # conv3 = Conv1D(filters=args['filters_audio'], dilation_rate=2, kernel_size=2, padding='same', data_format='channels_last', dtype='float32')(mp)
+    # drop3 = Dropout(args['drop_audio'])(conv3)
+    # gmp = GlobalMaxPooling1D()(drop3)
+    # drop4 = Dropout(args['drop_audio'])(gmp)
+    # dense1 = Dense(100, activation='relu')(drop4)
+    # drop5 = Dropout(args['drop_audio'])(dense1)
+    # dense2 = Dense(args['num_labels'], activation='softmax')(drop5)
