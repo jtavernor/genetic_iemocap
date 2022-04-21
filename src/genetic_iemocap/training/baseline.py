@@ -14,6 +14,7 @@ import torch.nn.functional as F
 bs = 32
 num_workers = 2
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+batch_level_padding = False # If false pad to max length in IEMOCAP
 # END CONSTANTS # 
 
 def custom_collate_fn(batch):
@@ -45,28 +46,26 @@ def custom_collate_fn(batch):
     input_lengths = [len(b) for b in flat_batch_audio_features]
     # max_length = max(input_lengths)
     # print(max(input_lengths))
-    # max_length = 2605
-    
-    # for i, length in enumerate(input_lengths):
-    #     while length < max_length:
-    #         flat_batch_audio_features[i].append([0]*40)
-    #         length += 1
 
-    # if max_length == 0:
-        # print('0 length feature vector found?')
-        # print(batch)
-    # print(len(flat_batch_audio_features))
-    # print(flat_batch_audio_features[0].size())
-    flat_batch_audio_features = pad_sequence(flat_batch_audio_features, batch_first=True)
-    # print(flat_batch_audio_features.size())
-    # print(flat_batch_audio_features.size())
+    # Code for padding to max length:
+    if batch_level_padding:
+        # Code for batch-level padding
+        flat_batch_audio_features = pad_sequence(flat_batch_audio_features, batch_first=True)
+    else:
+        max_length = 2605
+        
+        for i, length in enumerate(input_lengths):
+            padding = torch.zeros((max_length-length, 40))
+            flat_batch_audio_features[i] = torch.cat([flat_batch_audio_features[i],padding])
+
+        flat_batch_audio_features = torch.stack(flat_batch_audio_features, dim=0).float()
     return flat_batch_audio_features, input_lengths, labels
 
 dataset = IEMOCAPDataset('../data_providers/labels.pk')
 dataset.train()
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=bs, shuffle=True, num_workers=num_workers, collate_fn=custom_collate_fn)
 
-model = Baseline(40).to(device)
+model = Baseline(2605).to(device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(model.parameters(), lr=0.001)

@@ -22,7 +22,7 @@ class Baseline(torch.nn.Module):
         # print(x.shape)
         # print('x', x.shape)
         # x = x.unsqueeze(dim=0)
-        x = torch.transpose(x, 1, 2)
+        # x = torch.transpose(x, 1, 2)
         # print(x.shape)
         x = self.conv1(x)
         x = self.dropout1(x)

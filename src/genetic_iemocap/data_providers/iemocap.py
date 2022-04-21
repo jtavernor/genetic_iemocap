@@ -7,6 +7,7 @@ import re
 import librosa
 import pickle
 import math
+import random
 import numpy as np
 import pandas as pd
 
@@ -91,13 +92,14 @@ class IEMOCAPDataset(Dataset):
             self.label_file = saved_labels['label_file']
             self.features = saved_labels['features']
         
-        self.dataset_keys = self.train_keys
+        self.full_dataset_keys = self.train_keys
+        self.active_dataset_keys = self.full_dataset_keys
 
     def __len__(self):
-        return len(self.dataset_keys)
+        return len(self.active_dataset_keys)
     
     def __getitem__(self, idx):
-        key = self.dataset_keys[idx]
+        key = self.active_dataset_keys[idx]
         labels = self.label_file[key]
         return self.features[key], {label: self.bin(self.label_file[key][label]) for label in self.label_file[key]}
     
@@ -297,7 +299,12 @@ class IEMOCAPDataset(Dataset):
         return audio_features
     
     def train(self):
-        self.dataset_keys = self.train_keys
+        self.full_dataset_keys = self.train_keys
+        self.active_dataset_keys = self.full_dataset_keys
     
     def test(self):
-        self.dataset_keys = self.test_keys
+        self.full_dataset_keys = self.test_keys
+        self.active_dataset_keys = self.full_dataset_keys
+
+    def use_subset(self, subset_size):
+        self.active_dataset_keys = random.choices(self.full_dataset_keys, k=subset_size)
