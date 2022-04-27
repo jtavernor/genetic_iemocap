@@ -374,52 +374,51 @@ class CoDeepNEATModuleConv1DMaxPool1DDropout(CoDeepNEATModuleBase):
         @return: float between 0 and 1. High values indicating difference, low values indicating similarity
         """
         congruence_list = list()
-        if self.merge_method == other_module.merge_method:
-            congruence_list.append(1.0)
+        if type(other_module) != CoDeepNEATModuleConv1DMaxPool1DDropout:
+            return 0
         else:
-            congruence_list.append(1 / len(self.config_params['merge_method']))
-        if self.filters >= other_module.filters:
-            congruence_list.append(other_module.filters / self.filters)
-        else:
-            congruence_list.append(self.filters / other_module.filters)
-        if self.kernel_size == other_module.kernel_size:
-            congruence_list.append(1.0)
-        else:
-            congruence_list.append(1 / len(self.config_params['kernel_size']))
-        if self.dilation_rate == other_module.dilation_rate:
-            congruence_list.append(1.0)
-        else:
-            congruence_list.append(1 / len(self.config_params['dilation_rate']))
-        if self.strides == other_module.strides:
-            congruence_list.append(1.0)
-        else:
-            congruence_list.append(1 / len(self.config_params['strides']))
-        if self.padding == other_module.padding:
-            congruence_list.append(1.0)
-        else:
-            congruence_list.append(1 / len(self.config_params['padding']))
-        if self.activation == other_module.activation:
-            congruence_list.append(1.0)
-        else:
-            congruence_list.append(1 / len(self.config_params['activation']))
-        if self.kernel_init == other_module.kernel_init:
-            congruence_list.append(1.0)
-        else:
-            congruence_list.append(1 / len(self.config_params['kernel_init']))
-        if self.bias_init == other_module.bias_init:
-            congruence_list.append(1.0)
-        else:
-            congruence_list.append(1 / len(self.config_params['bias_init']))
-        congruence_list.append(abs(self.max_pool_flag - other_module.max_pool_flag))
-        if self.max_pool_size == other_module.max_pool_size:
-            congruence_list.append(1.0)
-        else:
-            congruence_list.append(1 / len(self.config_params['max_pool_size']))
-        congruence_list.append(abs(self.dropout_flag - other_module.dropout_flag))
-        if self.dropout_rate >= other_module.dropout_rate:
-            congruence_list.append(other_module.dropout_rate / self.dropout_rate)
-        else:
-            congruence_list.append(self.dropout_rate / other_module.dropout_rate)
+            if self.merge_method == other_module.merge_method:
+                congruence_list.append(1.0)
+            else:
+                congruence_list.append(1 / len(self.config_params['merge_method']))
+            if self.filters >= other_module.filters:
+                congruence_list.append(other_module.filters / self.filters)
+            else:
+                congruence_list.append(self.filters / other_module.filters)
+            if self.kernel_size == other_module.kernel_size:
+                congruence_list.append(1.0)
+            else:
+                congruence_list.append(1 / len(self.config_params['kernel_size']))
+            if self.dilation_rate == other_module.dilation_rate:
+                congruence_list.append(1.0)
+            else:
+                congruence_list.append(1 / len(self.config_params['dilation_rate']))
+            if self.strides == other_module.strides:
+                congruence_list.append(1.0)
+            else:
+                congruence_list.append(1 / len(self.config_params['strides']))
+            if self.padding == other_module.padding:
+                congruence_list.append(1.0)
+            else:
+                congruence_list.append(1 / len(self.config_params['padding']))
+            if self.activation == other_module.activation:
+                congruence_list.append(1.0)
+            else:
+                congruence_list.append(1 / len(self.config_params['activation']))
+            if self.bias_init == other_module.bias_init:
+                congruence_list.append(1.0)
+            else:
+                congruence_list.append(1 / len(self.config_params['bias_init']))
+            congruence_list.append(abs(self.max_pool_flag - other_module.max_pool_flag))
+            if self.max_pool_size == other_module.max_pool_size:
+                congruence_list.append(1.0)
+            else:
+                congruence_list.append(1 / len(self.config_params['max_pool_size']))
+            congruence_list.append(abs(self.dropout_flag - other_module.dropout_flag))
+            if self.dropout_rate >= other_module.dropout_rate:
+                congruence_list.append(other_module.dropout_rate / self.dropout_rate)
+            else:
+                congruence_list.append(self.dropout_rate / other_module.dropout_rate)
 
         # Return the distance as the distance of the average congruence to the perfect congruence of 1.0
         return round(1.0 - statistics.mean(congruence_list), 4)
