@@ -12,14 +12,16 @@ import numpy as np
 import pandas as pd
 
 class IEMOCAPDataset(Dataset):
-    def __init__(self, saved_labels_path, bin_labels=True, iemocap_root_dir=IEMOCAP_directory):
+    def __init__(self, saved_labels_path, bin_labels=True, iemocap_root_dir=IEMOCAP_directory, avg_audio_features=False, dim_size=40):
         self.IEMOCAP_directory = iemocap_root_dir
         self.bin_labels = bin_labels
+        self.dim_size = dim_size
         self.mel_spec_stats = {
             'mean': [], 'std': []
         }
         # Load IEMOCAP labels 
         if saved_labels_path is None or not os.path.isfile(saved_labels_path):
+            print('No labels found, regenerating them...')
             if saved_labels_path == None:
                 saved_labels_path = 'iemocap_labels.pk'
             self.test_keys = []
@@ -95,12 +97,19 @@ class IEMOCAPDataset(Dataset):
         self.full_dataset_keys = self.train_keys
         self.active_dataset_keys = self.full_dataset_keys
 
+        if avg_audio_features:
+            self.avg_audio_features_fn()
+
     def __len__(self):
         return len(self.active_dataset_keys)
+    
+    def max_len(self):
+        return len(self.full_dataset_keys)
     
     def __getitem__(self, idx):
         key = self.active_dataset_keys[idx]
         labels = self.label_file[key]
+
         return self.features[key], {label: self.bin(self.label_file[key][label]) for label in self.label_file[key]}
     
     def bin(self, label):
@@ -230,7 +239,7 @@ class IEMOCAPDataset(Dataset):
         ### CONSTANTS ###
         SR = 16000 # 16,000 samples per second
         n_fft = 2048 # length of the FFT window
-        n_mels = 40 # size of mel vector 
+        n_mels = self.dim_size # size of mel vector 
         hop_length = 160 # number of samples between frames (i.e. each frame is 160 samples, or 0.01 seconds)
         interval_length = hop_length/SR
         fmin = 0
@@ -308,3 +317,46 @@ class IEMOCAPDataset(Dataset):
 
     def use_subset(self, subset_size):
         self.active_dataset_keys = random.choices(self.full_dataset_keys, k=subset_size)
+    
+    def truncate(self, max_seq_len):
+        cur_dataset_is_train = self.active_dataset_keys[0] in self.train_keys
+        all_keys = self.train_keys + self.test_keys
+        for key in all_keys:
+            seq_len = self.get_seq_len(key)
+            if seq_len > max_seq_len:
+                for key_list in [self.train_keys, self.test_keys, self.full_dataset_keys, self.active_dataset_keys]:
+                    while key in key_list:
+                        key_list.remove(key)
+        
+        if cur_dataset_is_train:
+            self.train()
+        else:
+            self.test()
+    
+    def print_stats(self):
+        print(f'Dataset train size {len(self.train_keys)}')
+        print(f'Dataset test size {len(self.test_keys)}')
+
+    def get_seq_len(self, key):
+        features = self.features[key]
+        audio_features = features['audio_features']
+        flat_audio_features = []
+        for interval_list in audio_features:
+            # interval_list is of shape num_spectrograms x 40 
+            for spectrogram in interval_list:
+                # this is the length 40 spectrogram
+                flat_audio_features.append(spectrogram)
+        flat_audio_features = np.array(flat_audio_features)
+        return flat_audio_features.shape[0]
+
+    def avg_audio_features_fn(self):
+        print('Averaging audio features per word')
+        for key in tqdm(self.train_keys + self.test_keys):
+            # will be of shape num_intervals x num_mels x 40 
+            # want to avg to get num_intervals x 40 i.e. an averaged mel spectrogram for each word 
+            audio_features = self.features[key]['audio_features']
+            for i, interval_mels in enumerate(audio_features):
+                # now want to average all mels in interval_mels to a single vector of 40
+                np_mels = np.array(interval_mels)
+                mean_mel = np.mean(np_mels, axis=0)
+                self.features[key]['audio_features'][i] = [mean_mel]
