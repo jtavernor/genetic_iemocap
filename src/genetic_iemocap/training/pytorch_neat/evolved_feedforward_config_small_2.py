@@ -59,8 +59,8 @@ class IEMOCAPConfig:
     avg_generation_num_params = []
     subset_size = 50
 
-    def fitness_fn(self, genome):
-        if self.cur_gen < genome.current_generation:
+    def fitness_fn(self, genome, gen_check=True):
+        if gen_check and self.cur_gen < genome.current_generation:
             self.cur_gen = genome.current_generation
             # Generation complete
             cur_gen_avg_fit = np.mean(self.generation_fitnesses)
@@ -115,12 +115,12 @@ class IEMOCAPConfig:
         phenotype.to(self.DEVICE)
         self.dataset.test()
         self.dataset.use_subset(self.dataset.max_len())
-        dataloader = torch.utils.data.DataLoader(self.dataset, batch_size=self.bs, shuffle=True, num_workers=self.num_workers, collate_fn=custom_collate_fn)
+        dataloader = torch.utils.data.DataLoader(self.dataset, batch_size=self.bs, shuffle=True, num_workers=self.num_workers, collate_fn=self.collater.custom_collate_fn)
 
         correct = 0
         for audio_features, input_lengths, labels in dataloader:
-            audio_features = audio_features.to(device, dtype=torch.float)
-            activation_labels = torch.tensor(labels['act']).to(device)
+            audio_features = audio_features.to(self.DEVICE, dtype=torch.float)
+            activation_labels = torch.tensor(labels['act']).to(self.DEVICE)
             
             batch_size = audio_features.size(0)
             audio_features = audio_features.reshape(batch_size, -1) # squash dimensions together
@@ -129,5 +129,6 @@ class IEMOCAPConfig:
             correct += (outputs == activation_labels).float().sum()
 
         accuracy = correct / len(self.dataset)
+        num_params = sum(p.numel() for p in phenotype.parameters() if p.requires_grad)
 
-        return accuracy # Accuracy will be the fitness for the phenotype
+        return accuracy, num_params # Accuracy will be the fitness for the phenotype

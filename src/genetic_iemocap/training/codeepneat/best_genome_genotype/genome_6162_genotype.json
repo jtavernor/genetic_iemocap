@@ -1,0 +1,93 @@
+{
+    "genome_type": "CoDeepNEAT",
+    "genome_id": 6162,
+    "fitness": 62.107,
+    "blueprint": {
+        "blueprint_type": "CoDeepNEAT",
+        "blueprint_id": 1303,
+        "parent_mutation": {
+            "parent_id": [
+                1262,
+                1241
+            ],
+            "mutation": "crossover",
+            "gene_parent": {
+                "1": 1262,
+                "2": 1262,
+                "3": 1262
+            },
+            "optimizer_parent": 1262
+        },
+        "blueprint_graph": {
+            "1": {
+                "node": 1,
+                "species": null
+            },
+            "2": {
+                "node": 2,
+                "species": 19
+            },
+            "3": {
+                "conn_start": 1,
+                "conn_end": 2,
+                "enabled": true
+            }
+        },
+        "optimizer_factory": {
+            "class_name": "sgd",
+            "config": {
+                "learning_rate": 0.0994,
+                "momentum": 0.6900000000000001,
+                "nesterov": false
+            }
+        }
+    },
+    "bp_assigned_modules": {
+        "19": {
+            "module_type": "DenseDropout",
+            "module_id": 1216,
+            "parent_mutation": {
+                "parent_id": 1176,
+                "mutation": "mutation",
+                "mutated_params": {
+                    "bias_init": "zeros"
+                }
+            },
+            "merge_method": {
+                "class_name": "Concatenate",
+                "config": {
+                    "axis": -1,
+                    "dtype": "float32"
+                }
+            },
+            "units": 48,
+            "activation": "tanh",
+            "kernel_init": "glorot_normal",
+            "bias_init": "zeros",
+            "dropout_flag": false,
+            "dropout_rate": 0.4
+        }
+    },
+    "output_layers": [
+        {
+            "class_name": "Flatten",
+            "config": {
+                "dtype": "float32"
+            }
+        },
+        {
+            "class_name": "Dense",
+            "config": {
+                "units": 3,
+                "activation": "softmax",
+                "dtype": "float32"
+            }
+        }
+    ],
+    "input_shape": [
+        5,
+        10
+    ],
+    "dtype": "float32",
+    "origin_generation": 30
+}
